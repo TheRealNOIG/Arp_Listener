@@ -1,6 +1,8 @@
+#![allow(non_snake_case)]
+
 use std::path::PathBuf;
 
-use clap::{Parser, Subcommand};
+use clap::Parser;
 use pnet::datalink::Channel::Ethernet;
 use pnet::datalink::{self, NetworkInterface};
 use pnet::packet::arp::ArpPacket;
@@ -48,7 +50,7 @@ fn main() {
                     .ips
                     .iter()
                     .enumerate()
-                    .for_each(|(index, ip)| print!("{}", ip));
+                    .for_each(|(_index, ip)| print!("{}", ip));
             }
             println!();
         });
@@ -63,7 +65,7 @@ fn main() {
             .unwrap_or_else(|| panic!("No Network Interface: {}", interface_name));
 
         // Create a new channel, dealing with layer 2 packets
-        let (tx, mut rx) = match datalink::channel(&interface, Default::default()) {
+        let (_tx, mut rx) = match datalink::channel(&interface, Default::default()) {
             Ok(Ethernet(tx, rx)) => (tx, rx),
             Ok(_) => panic!("Unhandled channel type"),
             Err(e) => panic!(
