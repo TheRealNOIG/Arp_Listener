@@ -32,20 +32,20 @@ fn main() {
     let interfaces = datalink::interfaces();
 
     if cli.list {
-        print!("{:<50} {:<25}", "Name", "Mac");
+        print!("{:<50} {:<20}", "Name", "Mac");
         if cli.verbose {
-            print!("{:<35}{:<25}", "Description", "IPs")
+            print!("{:<45}{:<25}", "Description", "IPs")
         }
         println!();
 
         interfaces.clone().into_iter().for_each(|iface| {
             if let Some(mac) = iface.mac {
-                print!("{:<50} {:<25}", iface.name, mac.to_string());
+                print!("{:<50} {:<20}", iface.name, mac.to_string());
             } else {
-                print!("{:<50} {:<25}", iface.name, "");
+                print!("{:<50} {:<20}", iface.name, "");
             }
             if cli.verbose {
-                print!("{:<35}", iface.description);
+                print!("{:<45}", iface.description);
                 iface
                     .ips
                     .iter()
