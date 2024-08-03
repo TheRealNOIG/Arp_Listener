@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use pnet::datalink::Channel::Ethernet;
 use pnet::datalink::{self, NetworkInterface};
 use pnet::packet::arp::ArpPacket;
@@ -15,19 +15,52 @@ struct Cli {
     /// Set Output File
     #[arg(short, long, value_name = "FILE")]
     output: Option<PathBuf>,
+
+    /// List Interfaces
+    #[arg(short, long)]
+    list: bool,
+
+    /// Verbose Output
+    #[arg(short, long)]
+    verbose: bool,
 }
 
 fn main() {
     let cli = Cli::parse();
+    let interfaces = datalink::interfaces();
+
+    if cli.list {
+        print!("{:<50} {:<50}", "Name", "Description");
+        if cli.verbose {
+            print!("{:<25}{:<25}", "Mac", "IPs")
+        }
+        println!();
+
+        interfaces.clone().into_iter().for_each(|iface| {
+            print!("{:<50} {:<50}", iface.name, iface.description);
+            if cli.verbose {
+                if let Some(mac) = iface.mac {
+                    print!("{:<25}", mac.to_string());
+                } else {
+                    print!("{:<25}", "");
+                }
+                iface
+                    .ips
+                    .iter()
+                    .enumerate()
+                    .for_each(|(index, ip)| print!("{}", ip));
+            }
+            println!();
+        });
+    }
 
     if let Some(interface_name) = cli.interface_name.as_deref() {
-        println!("Interface Name: {0}", interface_name);
-        let interfaces = datalink::interfaces();
         let interface = interfaces
+            .clone()
             .into_iter()
             .filter(|iface: &NetworkInterface| iface.name == interface_name)
             .next()
-            .unwrap_or_else(|| panic!("No netowkr interface: {}", interface_name));
+            .unwrap_or_else(|| panic!("No Network Interface: {}", interface_name));
 
         // Create a new channel, dealing with layer 2 packets
         let (tx, mut rx) = match datalink::channel(&interface, Default::default()) {
