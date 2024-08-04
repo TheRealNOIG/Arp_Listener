@@ -8,6 +8,8 @@ use pnet::datalink::{self, NetworkInterface};
 use pnet::packet::arp::ArpPacket;
 use pnet::packet::ethernet::{EtherTypes, EthernetPacket};
 use pnet::packet::Packet;
+use tabled::builder::Builder;
+use tabled::settings::Style;
 
 #[derive(Parser)]
 struct Cli {
@@ -32,28 +34,7 @@ fn main() {
     let interfaces = datalink::interfaces();
 
     if cli.list {
-        print!("{:<50} {:<20}", "Name", "Mac");
-        if cli.verbose {
-            print!("{:<45}{:<25}", "Description", "IPs")
-        }
-        println!();
-
-        interfaces.clone().into_iter().for_each(|iface| {
-            if let Some(mac) = iface.mac {
-                print!("{:<50} {:<20}", iface.name, mac.to_string());
-            } else {
-                print!("{:<50} {:<20}", iface.name, "");
-            }
-            if cli.verbose {
-                print!("{:<45}", iface.description);
-                iface
-                    .ips
-                    .iter()
-                    .enumerate()
-                    .for_each(|(index, ip)| if index >= 1 {print!(" - {}", ip)} else {print!("{}", ip)});
-            }
-            println!();
-        });
+        List(&cli, &interfaces.clone());
     }
 
     if let Some(interface_name) = cli.interface_name.as_deref() {
@@ -105,4 +86,43 @@ fn main() {
     if let Some(file) = cli.output.as_deref() {
         println!("Output File: {0}", file.display());
     }
+}
+
+fn List(cli: &Cli, interfaces: &Vec<NetworkInterface>) {
+    let mut builder = Builder::default();
+
+    builder.push_record(["Name", "Mac"]);
+    if cli.verbose {
+        builder.push_column(["Description"]);
+        builder.push_column(["IPs"]);
+    }
+
+    interfaces.into_iter().for_each(|iface| {
+        let mut record: Vec<String> = vec![];
+        if let Some(mac) = iface.mac {
+            record.push(iface.name.to_string());
+            record.push(mac.to_string());
+        } else {
+            record.push(iface.name.to_string());
+            record.push("".to_string());
+        }
+        if cli.verbose {
+            record.push(iface.description.to_string());
+
+            let mut ips = String::new();
+            iface.ips.iter().enumerate().for_each(|(index, ip)| {
+                if index >= 1 {
+                    ips.push_str(&format!(" - {ip}"));
+                } else {
+                    ips.push_str(&format!("{ip}"));
+                }
+            });
+            record.push(ips);
+        }
+        builder.push_record(record);
+    });
+
+    let mut table = builder.build();
+    table.with(Style::sharp());
+    println!("{table}");
 }
