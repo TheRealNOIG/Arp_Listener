@@ -8,7 +8,7 @@ use pnet::datalink::{self, NetworkInterface};
 use pnet::packet::arp::ArpPacket;
 use pnet::packet::ethernet::{EtherTypes, EthernetPacket};
 use pnet::packet::Packet;
-use tabled::builder::{self, Builder};
+use tabled::builder::Builder;
 use tabled::settings::Style;
 
 #[derive(Parser)]
